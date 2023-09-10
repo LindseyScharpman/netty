@@ -212,31 +212,31 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
          * Return the assigned {@link RecvByteBufAllocator.Handle} which will be used to allocate {@link ByteBuf}'s when
          * receiving data.
          */
-        RecvByteBufAllocator.Handle recvBufAllocHandle();
+        RecvByteBufAllocator.Handle recvBufAllocHandle(); //分配接收数据用的Buffer
 
         /**
          * Return the {@link SocketAddress} to which is bound local or
          * {@code null} if none.
          */
-        SocketAddress localAddress();
+        SocketAddress localAddress();  //服务端绑定的端口地址
 
         /**
          * Return the {@link SocketAddress} to which is bound remote or
          * {@code null} if none is bound yet.
          */
-        SocketAddress remoteAddress();
+        SocketAddress remoteAddress();//远端地址
 
         /**
          * Register the {@link Channel} of the {@link ChannelPromise} and notify
          * the {@link ChannelFuture} once the registration was complete.
          */
-        void register(EventLoop eventLoop, ChannelPromise promise);
+        void register(EventLoop eventLoop, ChannelPromise promise); //channel向Reactor注册
 
         /**
          * Bind the {@link SocketAddress} to the {@link Channel} of the {@link ChannelPromise} and notify
          * it once its done.
          */
-        void bind(SocketAddress localAddress, ChannelPromise promise);
+        void bind(SocketAddress localAddress, ChannelPromise promise);//服务端绑定端口地址
 
         /**
          * Connect the {@link Channel} of the given {@link ChannelFuture} with the given remote {@link SocketAddress}.
@@ -245,7 +245,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
          *
          * The {@link ChannelPromise} will get notified once the connect operation was complete.
          */
-        void connect(SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise);
+        void connect(SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise);//客户端连接服务端
 
         /**
          * Disconnect the {@link Channel} of the {@link ChannelFuture} and notify the {@link ChannelPromise} once the

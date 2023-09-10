@@ -118,6 +118,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     private Selector unwrappedSelector;
     private SelectedSelectionKeySet selectedKeys;
 
+    //  //用于创建JDK NIO Selector,ServerSocketChannel
     private final SelectorProvider provider;
 
     private static final long AWAKE = -1L;
@@ -129,6 +130,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     //    other value T    when EL is waiting with wakeup scheduled at time T
     private final AtomicLong nextWakeupNanos = new AtomicLong(AWAKE);
 
+    //  //Selector轮询策略 决定什么时候轮询，什么时候处理IO事件，什么时候执行异步任务
     private final SelectStrategy selectStrategy;
 
     private volatile int ioRatio = 50;
@@ -173,6 +175,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     private SelectorTuple openSelector() {
         final Selector unwrappedSelector;
         try {
+            //通过JDK NIO SelectorProvider创建Selector
             unwrappedSelector = provider.openSelector();
         } catch (IOException e) {
             throw new ChannelException("failed to open a new selector", e);
@@ -196,6 +199,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             }
         });
 
+        //判断是否可以对Selector进行优化，这里主要针对JDK NIO原生Selector的实现类进行优化，因为SelectorProvider可以加载的是自定义Selector实现
+        //如果SelectorProvider创建的Selector不是JDK原生sun.nio.ch.SelectorImpl的实现类，那么无法进行优化，直接返回
         if (!(maybeSelectorImplClass instanceof Class) ||
             // ensure the current selector implementation is what we can instrument.
             !((Class<?>) maybeSelectorImplClass).isAssignableFrom(unwrappedSelector.getClass())) {
@@ -241,9 +246,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     if (cause != null) {
                         return cause;
                     }
-
+                    // publicSelectedKeys 相当于是selectedKeys的视图，用于向外部线程返回IO就绪的SelectionKey,这个集合在外部线程中只能做删除操作不可增加元素,并且不是线程安全的。
                     selectedKeysField.set(unwrappedSelector, selectedKeySet);
-                    publicSelectedKeysField.set(unwrappedSelector, selectedKeySet);
+                    publicSelectedKeysField.set(unwrappedSelector, selectedKeySet); // 不支持remove方法 为何？TODO 没bug？
                     return null;
                 } catch (NoSuchFieldException e) {
                     return e;

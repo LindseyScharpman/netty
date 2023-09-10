@@ -65,7 +65,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
             throw new ChannelException("Failed to open a socket.", e);
         }
     }
-
+    //ServerSocketChannel相关的配置
     private final ServerSocketChannelConfig config;
 
     /**
@@ -89,11 +89,14 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
         this(newChannel(provider, family));
     }
 
+
     /**
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
+        //父类AbstractNioChannel中保存JDK NIO原生ServerSocketChannel以及要监听的事件OP_ACCEPT
         super(null, channel, SelectionKey.OP_ACCEPT);
+        //DefaultChannelConfig中设置用于Channel接收数据用的buffer->AdaptiveRecvByteBufAllocator
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 

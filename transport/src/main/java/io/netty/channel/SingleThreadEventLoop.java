@@ -49,6 +49,7 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
                                     boolean addTaskWakesUp, int maxPendingTasks,
                                     RejectedExecutionHandler rejectedExecutionHandler) {
         super(parent, threadFactory, addTaskWakesUp, maxPendingTasks, rejectedExecutionHandler);
+        //尾部队列 执行一些统计任务 不常用
         tailTasks = newTaskQueue(maxPendingTasks);
     }
 
@@ -78,6 +79,7 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
 
     @Override
     public ChannelFuture register(Channel channel) {
+        //注册channel到绑定的Reactor上
         return register(new DefaultChannelPromise(channel, this));
     }
 

@@ -21,7 +21,9 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.ServerChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -29,6 +31,8 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+
+import java.nio.channels.Selector;
 
 /**
  * Echoes back any received data from a client.
@@ -48,17 +52,18 @@ public final class EchoServer {
             sslCtx = null;
         }
 
+
         // Configure the server.
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup(3);
         final EchoServerHandler serverHandler = new EchoServerHandler();
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
-             .channel(NioServerSocketChannel.class)
-             .option(ChannelOption.SO_BACKLOG, 100)
-             .handler(new LoggingHandler(LogLevel.INFO))
-             .childHandler(new ChannelInitializer<SocketChannel>() {
+             .channel(NioServerSocketChannel.class) // 配置主Reactor的channel类型
+             .option(ChannelOption.SO_BACKLOG, 100) //设置主Reactor中channel的option选项
+             .handler(new LoggingHandler(LogLevel.INFO))//设置主Reactor中Channel->pipeline->handle
+             .childHandler(new ChannelInitializer<SocketChannel>() { ////设置从Reactor中注册channel的pipeline
                  @Override
                  public void initChannel(SocketChannel ch) throws Exception {
                      ChannelPipeline p = ch.pipeline();
@@ -70,7 +75,7 @@ public final class EchoServer {
                  }
              });
 
-            // Start the server.
+            // Start the server. 绑定端口启动服务，开始监听accept事件
             ChannelFuture f = b.bind(PORT).sync();
 
             // Wait until the server socket is closed.

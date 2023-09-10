@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.Channel;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 
@@ -47,6 +48,7 @@ final class SelectorProviderUtil {
     @SuppressJava6Requirement(reason = "Usage guarded by java version check")
     static <C extends Channel> C newChannel(Method method, SelectorProvider provider,
                                                     InternetProtocolFamily family) throws IOException {
+        // 因为SocketChannel.open()在获取provider时候会进行加锁,在疯狂创建Channel时候大约会有1%性能损失(5000个连接)
         /**
          *  Use the {@link SelectorProvider} to open {@link SocketChannel} and so remove condition in
          *  {@link SelectorProvider#provider()} which is called by each SocketChannel.open() otherwise.

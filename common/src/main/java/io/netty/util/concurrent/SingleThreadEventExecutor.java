@@ -154,20 +154,30 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     protected SingleThreadEventExecutor(EventExecutorGroup parent, Executor executor,
                                         boolean addTaskWakesUp, int maxPendingTasks,
                                         RejectedExecutionHandler rejectedHandler) {
+        //parent为Reactor所属的NioEventLoopGroup Reactor线程组
         super(parent);
+        //向Reactor添加任务时，是否唤醒Selector停止轮询IO就绪事件，马上执行异步任务
         this.addTaskWakesUp = addTaskWakesUp;
+        //Reactor异步任务队列的大小
         this.maxPendingTasks = Math.max(16, maxPendingTasks);
+        //用于启动Reactor线程的executor -> ThreadPerTaskExecutor
         this.executor = ThreadExecutorMap.apply(executor, this);
+        //普通任务队列
         taskQueue = newTaskQueue(this.maxPendingTasks);
+        //普通任务队列满时的拒绝策略
         rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }
 
     protected SingleThreadEventExecutor(EventExecutorGroup parent, Executor executor,
                                         boolean addTaskWakesUp, Queue<Runnable> taskQueue,
                                         RejectedExecutionHandler rejectedHandler) {
+        // parent为Reactor所属的NioEventLoopGroup Reactor线程组
         super(parent);
+        // 向Reactor添加任务时，是否唤醒Selector停止轮询IO就绪事件，马上执行异步任务
         this.addTaskWakesUp = addTaskWakesUp;
+        // Reactor异步任务队列的大小
         this.maxPendingTasks = DEFAULT_MAX_PENDING_EXECUTOR_TASKS;
+        // 用于启动Reactor线程的executor -> ThreadPerTaskExecutor
         this.executor = ThreadExecutorMap.apply(executor, this);
         this.taskQueue = ObjectUtil.checkNotNull(taskQueue, "taskQueue");
         this.rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
@@ -832,9 +842,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     private void execute(Runnable task, boolean immediate) {
+        //当前线程是否为Reactor线程
         boolean inEventLoop = inEventLoop();
+        //addTaskWakesUp = true  addTask唤醒Reactor线程执行任务
         addTask(task);
         if (!inEventLoop) {
+            //如果当前线程不是Reactor线程，则启动Reactor线程
+            //这里可以看出Reactor线程的启动是通过 向NioEventLoop添加异步任务时启动的
             startThread();
             if (isShutdown()) {
                 boolean reject = false;
@@ -986,6 +1000,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                // 此处赋值thread即为EventLoop执行的线程
                 thread = Thread.currentThread();
                 if (interrupted) {
                     thread.interrupt();
@@ -994,6 +1009,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                    //Reactor线程开始启动
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {
